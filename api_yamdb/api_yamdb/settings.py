@@ -1,5 +1,5 @@
 from pathlib import Path
-
+import os
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -106,3 +106,18 @@ USE_TZ = True
 STATIC_URL = '/static/'
 
 STATICFILES_DIRS = ((BASE_DIR / 'static/'),)
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+
+EMAIL_FILE_PATH = os.path.join(BASE_DIR, 'sent_emails')
+
+EMAIL_HOST = 'smtp.yandex.ru'
+EMAIL_HOST_USER = 'host.yamdb@yandex.ru'
+EMAIL_USE_TLS = False
+EMAIL_USE_SSL = True
+
+EMAIL_HOST_PASSWORD = 'qsvhuklvekqknqfg'
+EMAIL_PORT = '465'
+
+
+
