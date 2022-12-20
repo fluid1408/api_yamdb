@@ -4,7 +4,7 @@ from rest_framework import viewsets, filters, mixins
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.permissions import IsAuthenticated
 
-from api.models import Title, Category, Genre
+from reviews.models import Title, Category, Genre
 from api.serializers import (
     TitleSerializer,
     CategorySerializer,

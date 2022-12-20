@@ -2,7 +2,7 @@ from rest_framework import serializers
 from rest_framework.relations import SlugRelatedField
 from rest_framework.validators import UniqueTogetherValidator
 
-from api.models import Title, Category, Genre
+from reviews.models import Title, Category, Genre
 
 
 class TitleSerializer(serializers.ModelSerializer):
