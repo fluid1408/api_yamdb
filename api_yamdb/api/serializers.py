@@ -17,7 +17,8 @@ class CheckConfirmationCodeSerializer(serializers.Serializer):
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
-        fields = ('first_name', 'last_name', 'username', 'email', 'role',)
+        fields = ('first_name', 'last_name', 'username', 'email', 'bio')
+        read_only_fields = ('role',)
         model = User
 
 

@@ -68,6 +68,10 @@ class User(AbstractUser):
     role = models.CharField(
         max_length=100, verbose_name="Роль", choices=ROLES, default=USER
     )
+    bio = models.TextField(
+        'Биография пользователя',
+        blank=True
+    )
     objects = UserManager()
 
     def __str__(self):
