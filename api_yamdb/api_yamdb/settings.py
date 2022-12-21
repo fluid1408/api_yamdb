@@ -1,5 +1,7 @@
 from pathlib import Path
 import os
+from datetime import timedelta
+from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -11,6 +13,7 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['*']
 
+load_dotenv()
 
 # Application definition
 
@@ -22,7 +25,6 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
-    'rest_framework_simplejwt',
     'reviews', 
     'api',
 ]
@@ -111,13 +113,29 @@ EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 
 EMAIL_FILE_PATH = os.path.join(BASE_DIR, 'sent_emails')
 
-EMAIL_HOST = 'smtp.yandex.ru'
-EMAIL_HOST_USER = 'host.yamdb@yandex.ru'
-EMAIL_USE_TLS = False
-EMAIL_USE_SSL = True
+EMAIL_HOST = 'smtp.mail.ru'
+EMAIL_PORT = '2525'
 
-EMAIL_HOST_PASSWORD = 'qsvhuklvekqknqfg'
-EMAIL_PORT = '465'
+EMAIL_USE_TLS = True
+EMAIL_USE_SSL = False
+
+EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
+#
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
 
 
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(days=30),
+    'AUTH_HEADER_TYPES': ('Bearer',),
+}
 
+
+REST_FRAMEWORK = {
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ],
+
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ],
+}

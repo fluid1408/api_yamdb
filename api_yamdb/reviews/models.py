@@ -105,7 +105,7 @@ class User(AbstractUser):
             algorithm="HS256",
         )
 
-        return token.decode("utf-8")
+        return token
 
 
 class Category(models.Model):

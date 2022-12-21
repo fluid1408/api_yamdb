@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from rest_framework.relations import SlugRelatedField
 from rest_framework.validators import UniqueTogetherValidator
+from django.contrib.auth import authenticate
 
 from reviews.models import Title, Category, Genre, User
 
@@ -16,7 +17,7 @@ class CheckConfirmationCodeSerializer(serializers.Serializer):
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
-        fields = ('first_name', 'last_name', 'username', 'bio', 'email', 'role',)
+        fields = ('first_name', 'last_name', 'username', 'email', 'role',)
         model = User
 
 

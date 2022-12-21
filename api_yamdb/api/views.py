@@ -6,11 +6,13 @@ from django.shortcuts import get_object_or_404
 from rest_framework import viewsets, filters, status, permissions
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from django.contrib.auth.hashers import make_password, check_password
+from rest_framework_simplejwt.tokens import AccessToken
 
+from django.conf import settings
 from reviews.models import Title, Category, Genre, User
 from .serializers import (
     TitleSerializer,
@@ -18,11 +20,19 @@ from .serializers import (
     GenreSerializer,
     UserSerializer,
     SendCodeSerializer,
-    CheckConfirmationCodeSerializer
+    CheckConfirmationCodeSerializer,
+
 )
-from .permissions import IsAuthorOrReadOnly
+from .permissions import (
+    IsAuthorOrReadOnly,
+    IsAdmin,
+    IsAuthorOrAdminOrModerator,
+    IsAdminUserOrReadOnly,
+)
+from rest_framework.permissions import AllowAny, IsAuthenticated
 
 @api_view(['POST'])
+@permission_classes([AllowAny])
 def send_confirmation_code(request):
     serializer = SendCodeSerializer(data=request.data)
     email = request.data.get('email', False)
@@ -35,20 +45,64 @@ def send_confirmation_code(request):
         User.objects.filter(email=email).update(
             confirmation_code=make_password(confirmation_code, salt=None, hasher='default')
         )
-        mail_subject = 'Код подтверждения на Yamdb.ru'
-        message = f'Ваш код подтверждения: {confirmation_code}'
-
-        send_mail(mail_subject, message, 'host.yamdb@yandex.ru', [email], fail_silently=False,)
-        return Response(f'Код отправлен на адрес {email}', status=status.HTTP_200_OK)
+        mail_subject = 'Код подтверждения для доступа к API! '
+        message = (
+            f'Здравствуйте! \n'
+            f'Код подтверждения для доступа к API: {confirmation_code}\n'
+            f'С уважением,\n'
+            f'Yamdb'
+        )
+        send_mail(mail_subject, message, settings.EMAIL_HOST_USER, [email], fail_silently=False, )
+        text_message = (
+            f'Код отправлен на адрес {email}.'
+            f' Проверьте раздел SPAM'
+        )
+        return Response(text_message, status=status.HTTP_200_OK)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def get_jwt(request):
+    username = request.data.get('username')
+    confirmation_code = request.data.get('confirmation_code')
+    if not username or not confirmation_code:
+        return Response(
+            'Одно или несколько обязательных полей пропущены',
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    if not User.objects.filter(username=username).exists():
+        return Response(
+            'Имя пользователя неверное',
+            status=status.HTTP_404_NOT_FOUND
+        )
+
+    user = User.objects.get(username=username)
+    if check_password(confirmation_code, user.confirmation_code):
+        token = AccessToken.for_user(user)
+        return Response(
+            {
+                'access': str(token)
+            }
+        )
+
+    return Response(
+        'Код подтверждения неверен',
+        status=status.HTTP_400_BAD_REQUEST
+    )
+
+
+
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
     lookup_field = 'username'
     filter_backends = [filters.SearchFilter]
+    permission_classes = [IsAdmin]
     search_fields = ['user__username', ]
 
 class APIUser(APIView):
+    @permission_classes([IsAuthenticated])
     def get(self, request):
         if request.user.is_authenticated:
             user = get_object_or_404(User, id=request.user.id)
