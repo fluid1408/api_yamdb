@@ -37,7 +37,7 @@ def send_confirmation_code(request):
     username = request.data.get('username', False)
     if serializer.is_valid():
         confirmation_code = ''.join(map(str, random.sample(range(10), 6)))
-        user = User.objects.filter(username=username).exists()
+        user = User.objects.filter(email=email).exists()
         if not user:
             User.objects.create_user(email=email, username=username)
         User.objects.filter(email=email).update(
