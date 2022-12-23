@@ -37,7 +37,7 @@ class User(AbstractUser):
         (USER, "Пользователь"),
     )
     username = models.CharField(
-        max_length=150,
+        max_length=100,
         unique=True,
         blank=False,
         null=False,
@@ -47,7 +47,7 @@ class User(AbstractUser):
         verbose_name="Ник пользователя",
     )
     email = models.EmailField(
-        max_length=254,
+        max_length=60,
         unique=True,
         blank=False,
         null=False

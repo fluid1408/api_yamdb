@@ -35,12 +35,13 @@ def send_confirmation_code(request):
     serializer = SendCodeSerializer(data=request.data)
     email = request.data.get('email', False)
     username = request.data.get('username', False)
-    if serializer.is_valid():
+    if serializer.is_valid(raise_exception=True):
         confirmation_code = ''.join(map(str, random.sample(range(10), 6)))
-        user = User.objects.filter(email=email).exists()
+        user = User.objects.filter(username=serializer.validated_data["username"]).exists()
+        print(user)
         if not user:
             User.objects.create_user(email=email, username=username)
-        User.objects.filter(email=email).update(
+        User.objects.filter(username=serializer.validated_data["username"]).update(
             confirmation_code=make_password(confirmation_code, salt=None, hasher='default')
         )
         mail_subject = 'Код подтверждения для доступа к API! '
@@ -53,10 +54,7 @@ def send_confirmation_code(request):
             '''
         )
         send_mail(mail_subject, message, settings.EMAIL_HOST_USER, [email], fail_silently=False,)
-        text_message = (
-            f'Код отправлен на адрес {email}.'
-            ' Проверьте раздел SPAM'
-        )
+        text_message = {'email': email, 'username': username}
         return Response(text_message, status=status.HTTP_200_OK)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
