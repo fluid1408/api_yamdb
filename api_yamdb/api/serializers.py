@@ -11,15 +11,9 @@ from reviews.models import Title, Category, Genre, User
 class SendCodeSerializer(serializers.Serializer):
     username = serializers.CharField(
         max_length=150,
-        validators=[
-            UniqueValidator(queryset=User.objects.all())
-        ]
     )
     email = serializers.EmailField(
         max_length=254,
-        validators=[
-            UniqueValidator(queryset=User.objects.all())
-        ]
     )
 
     def validate_username(self, value):

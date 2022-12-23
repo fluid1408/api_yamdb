@@ -10,6 +10,7 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from django.contrib.auth.hashers import make_password, check_password
+from django.contrib.auth.tokens import default_token_generator
 from rest_framework_simplejwt.tokens import AccessToken
 
 from django.conf import settings
@@ -35,27 +36,27 @@ def send_confirmation_code(request):
     serializer = SendCodeSerializer(data=request.data)
     email = request.data.get('email', False)
     username = request.data.get('username', False)
+    text_message = {'email': email, 'username': username}
+    if User.objects.filter(username=username).exists():
+        return Response(text_message, status=status.HTTP_200_OK)
     if serializer.is_valid(raise_exception=True):
         confirmation_code = ''.join(map(str, random.sample(range(10), 6)))
-        user = User.objects.filter(username=serializer.validated_data["username"]).exists()
-        print(user)
-        if not user:
-            User.objects.create_user(email=email, username=username)
+        user = User.objects.filter(username=serializer.validated_data["username"])
+        User.objects.create_user(email=email, username=username)
         User.objects.filter(username=serializer.validated_data["username"]).update(
-            confirmation_code=make_password(confirmation_code, salt=None, hasher='default')
+            confirmation_code=default_token_generator.make_token(user)
         )
         mail_subject = 'Код подтверждения для доступа к API! '
         message = (
-            f'Здравствуйте! \n'
-            f'Код подтверждения для доступа к API: {confirmation_code}\n'
-            f'С уважением,\n'
-            f'Yamdb'
+            f'''
+            Здравствуйте!
+            Код подтверждения для доступа к API: {confirmation_code}
+            С уважением
+            Yamdb
+            '''
         )
-        send_mail(mail_subject, message, settings.EMAIL_HOST_USER, [email], fail_silently=False, )
-        text_message = (
-            f'Код отправлен на адрес {email}.'
-            f' Проверьте раздел SPAM'
-        )
+        send_mail(mail_subject, message, settings.EMAIL_HOST_USER, [email], fail_silently=False,)
+        text_message = {'email': email, 'username': username}
         return Response(text_message, status=status.HTTP_200_OK)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -77,7 +78,7 @@ def get_jwt(request):
         )
 
     user = User.objects.get(username=username)
-    if check_password(confirmation_code, user.confirmation_code):
+    if default_token_generator.check_token(user, confirmation_code):
         token = AccessToken.for_user(user)
         return Response(
             {
@@ -98,7 +99,7 @@ class UserViewSet(viewsets.ModelViewSet):
     lookup_field = 'username'
     filter_backends = [filters.SearchFilter]
     permission_classes = [IsAdmin]
-    search_fields = ['user__username', ]
+    search_fields = ('username',)
 
 class APIUser(APIView):
     @permission_classes([IsAuthenticated])
