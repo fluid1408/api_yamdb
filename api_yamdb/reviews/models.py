@@ -5,7 +5,9 @@ from django.db import models
 from django.conf import settings
 from django.contrib.auth.models import (
     AbstractBaseUser, BaseUserManager, PermissionsMixin, AbstractUser
+
 )
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.core.validators import RegexValidator
 
 
@@ -13,13 +15,13 @@ from .validators import validate_username
 
 
 class UserManager(BaseUserManager):
-    def create_user(self, email, password=None, **kwargs):
+    def create_user(self, email, password=None, last_login=None, **kwargs):
         user = self.model(email=email, **kwargs)
         user.set_password(password)
         user.save()
         return user
 
-    def create_superuser(self, email, password, **kwargs):
+    def create_superuser(self, email, password, last_login=None, **kwargs):
         user = self.model(email=email, is_staff=True, is_superuser=True, **kwargs)
         user.set_password(password)
         user.save()
@@ -37,35 +39,47 @@ class User(AbstractUser):
         (USER, "Пользователь"),
     )
     username = models.CharField(
-        max_length=100,
-        unique=True,
-        blank=False,
-        null=False,
-        validators=[
-            validate_username,
-        ],
-        verbose_name="Ник пользователя",
-    )
-    email = models.EmailField(
-        max_length=60,
+        validators=(validate_username,),
+        max_length=150,
         unique=True,
         blank=False,
         null=False
     )
-    first_name = models.CharField(
-        max_length=100, blank=True, verbose_name="Имя пользователя"
+    email = models.EmailField(
+        max_length=254,
+        unique=True,
+        blank=False,
+        null=False
     )
-    last_name = models.CharField(
-        max_length=100, blank=True, verbose_name="Фамилия пользователя"
-    )
-    confirmation_code = models.CharField(max_length=6, default='000000')
     role = models.CharField(
-        max_length=100, verbose_name="Роль", choices=ROLES, default=USER
-    )
-    bio = models.TextField(
-        'Биография пользователя',
+        'роль',
+        max_length=20,
+        choices=ROLES,
+        default=USER,
         blank=True
     )
+    bio = models.TextField(
+        'биография',
+        blank=True,
+    )
+    first_name = models.CharField(
+        'имя',
+        max_length=150,
+        blank=True
+    )
+    last_name = models.CharField(
+        'фамилия',
+        max_length=150,
+        blank=True
+    )
+    confirmation_code = models.CharField(
+        'код подтверждения',
+        max_length=255,
+        null=True,
+        blank=False,
+        default='XXXX'
+    )
+
     objects = UserManager()
     def __str__(self):
         return self.username
@@ -81,6 +95,9 @@ class User(AbstractUser):
     @property
     def is_user(self):
         return self.role == self.USER
+
+    class Meta:
+        ordering = ('id',)
 
     @property
     def token(self) -> str:
@@ -171,40 +188,59 @@ class Title(models.Model):
 class Review(models.Model):
     title = models.ForeignKey(
         Title,
+        verbose_name='Произведение',
+        on_delete=models.CASCADE,
+        related_name='reviews'
+    )
+    text = models.TextField(
+        verbose_name='Текст',
+    )
+    author = models.ForeignKey(
+        User,
+        verbose_name='Автор',
         on_delete=models.CASCADE,
         related_name='reviews',
+        default=''
     )
-    text = models.CharField(
-        max_length=200
+    score = models.PositiveSmallIntegerField(
+        verbose_name='Рейтинг',
+        validators=[
+            MinValueValidator(1, 'от 1 до 10'),
+            MaxValueValidator(10, 'от 1 до 10')
+        ]
     )
-    score = models.IntegerField('оценка')
     pub_date = models.DateTimeField(
-        'дата публикации',
+        verbose_name='Дата публикации',
         auto_now_add=True,
         db_index=True
     )
-    def __str__(self):
-        return self.text
 
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['title', 'author'],
+                name='unique_review'
+            ),
+        ]
 
 class Comment(models.Model):
     review = models.ForeignKey(
         Review,
+        verbose_name='Отзыв',
         on_delete=models.CASCADE,
-        related_name='comments',
+        related_name='comments'
     )
-    text = models.CharField(
-        'текст комментария',
-        max_length=200
+    text = models.TextField(
+        verbose_name='Текст',
     )
     author = models.ForeignKey(
         User,
+        verbose_name='Пользователь',
         on_delete=models.CASCADE,
-        related_name='comments',
-        verbose_name='автор'
+        related_name='comments'
     )
     pub_date = models.DateTimeField(
-        'дата публикации',
+        verbose_name='Дата публикации',
         auto_now_add=True,
         db_index=True
     )
