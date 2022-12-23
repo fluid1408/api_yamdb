@@ -47,15 +47,17 @@ def send_confirmation_code(request):
         )
         mail_subject = 'Код подтверждения для доступа к API! '
         message = (
-            f'Здравствуйте! \n'
-            f'Код подтверждения для доступа к API: {confirmation_code}\n'
-            f'С уважением,\n'
-            f'Yamdb'
+            f'''
+            Здравствуйте! {username}
+            Код подтверждения для доступа к API: {confirmation_code}
+            С уважением
+            Yamdb
+            '''
         )
         send_mail(mail_subject, message, settings.EMAIL_HOST_USER, [email], fail_silently=False, )
         text_message = (
-            f'Код отправлен на адрес {email}.'
-            f' Проверьте раздел SPAM'
+            f'Код отправлен на адрес {email}. '
+            'Проверьте раздел SPAM'
         )
         return Response(text_message, status=status.HTTP_200_OK)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

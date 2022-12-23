@@ -107,7 +107,6 @@ class User(AbstractUser):
 
         return token
 
-
 class Category(models.Model):
     name = models.CharField(
         'имя категории',
@@ -161,7 +160,7 @@ class Title(models.Model):
         null=True,
         blank=True
     )
-    genre = models.ManyToManyField(
+    genre = models.ForeignKey(
         Genre,
         related_name='titles',
         verbose_name='жанр'
