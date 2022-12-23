@@ -24,10 +24,8 @@ from .serializers import (
 
 )
 from .permissions import (
-    IsAuthorOrReadOnly,
     IsAdmin,
     IsAuthorOrAdminOrModerator,
-    IsAdminUserOrReadOnly,
 )
 from rest_framework.permissions import AllowAny, IsAuthenticated
 
@@ -37,27 +35,26 @@ def send_confirmation_code(request):
     serializer = SendCodeSerializer(data=request.data)
     email = request.data.get('email', False)
     username = request.data.get('username', False)
-    if serializer.is_valid():
+    if serializer.is_valid(raise_exception=True):
         confirmation_code = ''.join(map(str, random.sample(range(10), 6)))
-        user = User.objects.filter(email=email).exists()
+        user = User.objects.filter(username=serializer.validated_data["username"]).exists()
+        print(user)
         if not user:
             User.objects.create_user(email=email, username=username)
-        User.objects.filter(email=email).update(
+        User.objects.filter(username=serializer.validated_data["username"]).update(
             confirmation_code=make_password(confirmation_code, salt=None, hasher='default')
         )
         mail_subject = 'Код подтверждения для доступа к API! '
         message = (
-            f'''
-            Здравствуйте! {username}
-            Код подтверждения для доступа к API: {confirmation_code}
-            С уважением
-            Yamdb
-            '''
+            f'Здравствуйте! \n'
+            f'Код подтверждения для доступа к API: {confirmation_code}\n'
+            f'С уважением,\n'
+            f'Yamdb'
         )
         send_mail(mail_subject, message, settings.EMAIL_HOST_USER, [email], fail_silently=False, )
         text_message = (
-            f'Код отправлен на адрес {email}. '
-            'Проверьте раздел SPAM'
+            f'Код отправлен на адрес {email}.'
+            f' Проверьте раздел SPAM'
         )
         return Response(text_message, status=status.HTTP_200_OK)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -128,16 +125,16 @@ class APIUser(APIView):
 class TitleViewSet(viewsets.ModelViewSet):
     queryset = Title.objects.all()
     serializer_class = TitleSerializer
-    permission_classes = [IsAuthorOrReadOnly]
+    permission_classes = [IsAuthorOrAdminOrModerator]
 
 
 class CategoryViewSet(viewsets.ModelViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
-    permission_classes = [IsAuthorOrReadOnly]
+    permission_classes = [IsAuthorOrAdminOrModerator]
 
 
 class GenreViewSet(viewsets.ModelViewSet):
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
-    permission_classes = [IsAuthorOrReadOnly]
+    permission_classes = [IsAuthorOrAdminOrModerator]

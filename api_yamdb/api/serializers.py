@@ -1,13 +1,40 @@
+import re
+from django.core.exceptions import ValidationError
 from rest_framework import serializers
 from rest_framework.relations import SlugRelatedField
-from rest_framework.validators import UniqueTogetherValidator
+from rest_framework.validators import UniqueTogetherValidator, UniqueValidator
 from django.contrib.auth import authenticate
 
 from reviews.models import Title, Category, Genre, User
 
 
 class SendCodeSerializer(serializers.Serializer):
-    email = serializers.EmailField(required=True)
+    username = serializers.CharField(
+        max_length=150,
+        validators=[
+            UniqueValidator(queryset=User.objects.all())
+        ]
+    )
+    email = serializers.EmailField(
+        max_length=254,
+        validators=[
+            UniqueValidator(queryset=User.objects.all())
+        ]
+    )
+
+    def validate_username(self, value):
+        if value.lower() == "me":
+            raise serializers.ValidationError("Username 'me' is not valid")
+        if re.search(r'^[\w.@+-]+$', value) is None:
+            raise ValidationError(
+                (f'Не допустимые символы <{value}> в нике.'),
+                params={'value': value},
+            )
+        return value
+
+    class Meta:
+        fields = ("username", "email")
+        model = User
 
 
 class CheckConfirmationCodeSerializer(serializers.Serializer):
@@ -17,8 +44,12 @@ class CheckConfirmationCodeSerializer(serializers.Serializer):
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
-        fields = ('first_name', 'last_name', 'username', 'email', 'role',)
+        fields = ('first_name', 'last_name', 'username', 'email', 'bio', 'role')
         model = User
+        extra_kwargs = {
+            'password': {'required': False},
+            'email': {'required': True}
+        }
 
 
 class TitleSerializer(serializers.ModelSerializer):

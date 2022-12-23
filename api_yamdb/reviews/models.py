@@ -9,28 +9,20 @@ from django.contrib.auth.models import (
 from django.core.validators import RegexValidator
 
 
+from .validators import validate_username
+
+
 class UserManager(BaseUserManager):
-    def create_user(self, username, email):
-        if username is None:
-            raise TypeError("Users must have a username.")
-
-        if email is None:
-            raise TypeError("Users must have an email address.")
-
-        user = self.model(username=username, email=self.normalize_email(email))
+    def create_user(self, email, password=None, **kwargs):
+        user = self.model(email=email, **kwargs)
+        user.set_password(password)
         user.save()
-
         return user
 
-    def create_superuser(self, username, email, password):
-        if password is None:
-            raise TypeError("Superusers must have a password.")
-
-        user = self.create_user(username, email)
-        user.is_superuser = True
-        user.is_staff = True
+    def create_superuser(self, email, password, **kwargs):
+        user = self.model(email=email, is_staff=True, is_superuser=True, **kwargs)
+        user.set_password(password)
         user.save()
-
         return user
 
 
@@ -45,18 +37,20 @@ class User(AbstractUser):
         (USER, "Пользователь"),
     )
     username = models.CharField(
-        max_length=150,
+        max_length=100,
         unique=True,
+        blank=False,
+        null=False,
         validators=[
-            RegexValidator(
-                regex=r"^[\w.@+-]+$",
-                message="Недопустимые символы в имени пользователя",
-            )
+            validate_username,
         ],
         verbose_name="Ник пользователя",
     )
     email = models.EmailField(
-        unique=True, max_length=254, verbose_name="Адрес электронной почты"
+        max_length=60,
+        unique=True,
+        blank=False,
+        null=False
     )
     first_name = models.CharField(
         max_length=100, blank=True, verbose_name="Имя пользователя"
@@ -68,8 +62,11 @@ class User(AbstractUser):
     role = models.CharField(
         max_length=100, verbose_name="Роль", choices=ROLES, default=USER
     )
+    bio = models.TextField(
+        'Биография пользователя',
+        blank=True
+    )
     objects = UserManager()
-
     def __str__(self):
         return self.username
 
