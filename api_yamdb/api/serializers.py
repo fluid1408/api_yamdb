@@ -1,5 +1,7 @@
+import datetime
 import re
 from django.core.exceptions import ValidationError
+from django.core.validators import MinValueValidator, MaxValueValidator
 from rest_framework import serializers
 from rest_framework.relations import SlugRelatedField
 from rest_framework.validators import UniqueTogetherValidator, UniqueValidator
@@ -78,6 +80,29 @@ class IsNotAdminUserSerializer(serializers.ModelSerializer):
         read_only_fields = ('role',)
 
 
+class CategorySerializer(serializers.ModelSerializer):
+    slug = serializers.SlugField(
+        max_length=50, min_length=None, allow_blank=False)
+
+    def validate_slug(self, value):
+        if Category.objects.filter(slug=value).exists():
+            raise serializers.ValidationError(
+                'Категория с таким slug уже существует!')
+        return value
+
+
+    class Meta:
+        exclude = ('id', )
+        model = Category
+        lookup_field = 'slug'
+
+
+class GenreSerializer(serializers.ModelSerializer):
+    class Meta:
+        exclude = ('id', )
+        model = Category
+        lookup_field = 'slug'
+
 class TitleReadSerializer(serializers.ModelSerializer):
 
     class Meta:
@@ -91,24 +116,43 @@ class TitleReadSerializer(serializers.ModelSerializer):
         )
         model = Title
 
+
+
 class TitleReWriteSerializer(serializers.ModelSerializer):
+    genre = serializers.SlugRelatedField(
+        slug_field='slug',
+        many=True,
+        queryset=Genre.objects.all(),
+        validators=[MinValueValidator(0), MaxValueValidator(50)], )
+    category = serializers.SlugRelatedField(
+        slug_field='slug',
+        queryset=Category.objects.all(), )
+    year = serializers.IntegerField()
+
     class Meta:
-        fields = '__all__'
         model = Title
+        fields = '__all__'
 
+    def validate_year(self, value):
+        if value > datetime.datetime.now().year:
+            raise serializers.ValidationError(
+                'Значение года не может быть больше текущего')
+        return value
 
-class CategorySerializer(serializers.ModelSerializer):
+class CommentSerializer(serializers.ModelSerializer):
+    review = serializers.SlugRelatedField(
+        slug_field='text',
+        read_only=True
+    )
+    author = serializers.SlugRelatedField(
+        slug_field='username',
+        read_only=True
+    )
+
     class Meta:
-        exclude = ('id', )
-        model = Category
-        lookup_field = 'slug'
+        model = Comment
+        fields = '__all__'
 
-
-class GenreSerializer(serializers.ModelSerializer):
-    class Meta:
-        exclude = ('id', )
-        model = Category
-        lookup_field = 'slug'
 
 class ReviewSerializer(serializers.ModelSerializer):
     title = serializers.SlugRelatedField(
@@ -133,18 +177,4 @@ class ReviewSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Review
-        fields = 'all'
-
-class CommentSerializer(serializers.ModelSerializer):
-    review = serializers.SlugRelatedField(
-        slug_field='text',
-        read_only=True
-    )
-    author = serializers.SlugRelatedField(
-        slug_field='username',
-        read_only=True
-    )
-
-    class Meta:
-        model = Comment
-        fields = 'all'
+        fields = '__all__'

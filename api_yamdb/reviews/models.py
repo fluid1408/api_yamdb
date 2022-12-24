@@ -165,7 +165,7 @@ class Title(models.Model):
         max_length=100,
         db_index=True
     )
-    pub_date = models.IntegerField(
+    year = models.IntegerField(
         'год',
     )
     category = models.ForeignKey(

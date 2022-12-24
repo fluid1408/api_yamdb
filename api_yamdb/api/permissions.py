@@ -35,10 +35,13 @@ class IsAuthorOrAdminOrModerator(permissions.BasePermission):
                 or request.user.is_admin
             )
 
-class IsAdminUserOrReadOnly(permissions.BasePermission):
+class IsAdminOrReadOnly(permissions.BasePermission):
+    """Проверка прав администратора."""
+    message = 'Нужны права администратора.'
+
     def has_permission(self, request, view):
-        if request.method in permissions.SAFE_METHODS:
-            return True
-        if request.user.is_authenticated:
-            return request.user.is_admin
-        return False
+        if (request.user.is_authenticated or request.method in permissions.SAFE_METHODS):
+            return (
+                    request.user.is_superuser
+                and request.user.is_admin
+            )

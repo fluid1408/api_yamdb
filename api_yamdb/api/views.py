@@ -17,9 +17,12 @@ from rest_framework_simplejwt.tokens import AccessToken,RefreshToken
 from rest_framework.filters import SearchFilter
 from rest_framework.pagination import PageNumberPagination
 from django.db.models import Avg
+from django_filters.rest_framework import DjangoFilterBackend
 
 from django.conf import settings
 from reviews.models import Title, Category, Genre, User, Review
+
+
 from .serializers import (
     TitleReadSerializer,
     TitleReWriteSerializer,
@@ -36,7 +39,7 @@ from .serializers import (
 from .permissions import (
     IsAdmin,
     IsAuthorOrAdminOrModerator,
-    IsAdminUserOrReadOnly,
+    IsAdminOrReadOnly,
 )
 from rest_framework.permissions import AllowAny, IsAuthenticated
 
@@ -135,9 +138,12 @@ class UserViewSet(viewsets.ModelViewSet):
 
 
 class TitleViewSet(viewsets.ModelViewSet):
-    queryset = Title.objects.annotate(rating=Avg('reviews__score')).order_by('id')
+    queryset = Title.objects.all()
+    permission_classes = (IsAdminOrReadOnly,)
     pagination_class = PageNumberPagination
-    permission_classes = (IsAdminUserOrReadOnly, )
+    filter_backends = (DjangoFilterBackend,)
+    filterset_fields = ("name", "year", "genre__slug", "category__slug")
+
     def get_serializer_class(self):
         if self.action in ('list', 'retrieve'):
             return TitleReadSerializer
@@ -147,16 +153,19 @@ class TitleViewSet(viewsets.ModelViewSet):
 class CategoryViewSet(viewsets.ModelViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
-    permission_classes = (IsAdminUserOrReadOnly, )
+    permission_classes = (IsAdminOrReadOnly, )
+    pagination_class = PageNumberPagination
     filter_backends = (SearchFilter, )
     search_fields = ('name', )
     lookup_field = 'slug'
 
 
+
 class GenreViewSet(viewsets.ModelViewSet):
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
-    permission_classes = (IsAdminUserOrReadOnly, )
+    pagination_class = PageNumberPagination
+    permission_classes = (IsAdminOrReadOnly, )
     filter_backends = (SearchFilter, )
     search_fields = ('name', )
     lookup_field = 'slug'
