@@ -78,9 +78,20 @@ class IsNotAdminUserSerializer(serializers.ModelSerializer):
         read_only_fields = ('role',)
 
 
-class TitleSerializer(serializers.ModelSerializer):
-    author = SlugRelatedField(slug_field='username', read_only=True)
+class TitleReadSerializer(serializers.ModelSerializer):
 
+    class Meta:
+        read_only_fields = (
+            'id',
+            'name',
+            'year',
+            'description',
+            'category',
+            'genre'
+        )
+        model = Title
+
+class TitleReWriteSerializer(serializers.ModelSerializer):
     class Meta:
         fields = '__all__'
         model = Title
@@ -88,14 +99,16 @@ class TitleSerializer(serializers.ModelSerializer):
 
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
-        fields = '__all__'
+        exclude = ('id', )
         model = Category
+        lookup_field = 'slug'
 
 
 class GenreSerializer(serializers.ModelSerializer):
     class Meta:
-        fields = '__all__'
-        model = Genre
+        exclude = ('id', )
+        model = Category
+        lookup_field = 'slug'
 
 class ReviewSerializer(serializers.ModelSerializer):
     title = serializers.SlugRelatedField(

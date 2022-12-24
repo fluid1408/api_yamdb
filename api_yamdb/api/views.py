@@ -15,11 +15,14 @@ from django.contrib.auth.hashers import make_password, check_password
 from django.contrib.auth.tokens import default_token_generator
 from rest_framework_simplejwt.tokens import AccessToken,RefreshToken
 from rest_framework.filters import SearchFilter
+from rest_framework.pagination import PageNumberPagination
+from django.db.models import Avg
 
 from django.conf import settings
 from reviews.models import Title, Category, Genre, User, Review
 from .serializers import (
-    TitleSerializer,
+    TitleReadSerializer,
+    TitleReWriteSerializer,
     CategorySerializer,
     GenreSerializer,
     UserSerializer,
@@ -27,11 +30,13 @@ from .serializers import (
     CheckConfirmationCodeSerializer,
     CommentSerializer,
     ReviewSerializer,
-    IsNotAdminUserSerializer
+    IsNotAdminUserSerializer,
+
 )
 from .permissions import (
     IsAdmin,
     IsAuthorOrAdminOrModerator,
+    IsAdminUserOrReadOnly,
 )
 from rest_framework.permissions import AllowAny, IsAuthenticated
 
@@ -84,6 +89,8 @@ def send_code(request):
             serializer.initial_data, status=status.HTTP_200_OK
         )
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
@@ -116,7 +123,6 @@ class UserViewSet(viewsets.ModelViewSet):
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.data)
 
-
     def patch(self, request):
         if request.user.is_authenticated:
             user = get_object_or_404(User, id=request.user.id)
@@ -128,23 +134,33 @@ class UserViewSet(viewsets.ModelViewSet):
         return Response('Вы не авторизованы', status=status.HTTP_401_UNAUTHORIZED)
 
 
-
 class TitleViewSet(viewsets.ModelViewSet):
-    queryset = Title.objects.all()
-    serializer_class = TitleSerializer
-    permission_classes = [IsAuthorOrAdminOrModerator]
+    queryset = Title.objects.annotate(rating=Avg('reviews__score')).order_by('id')
+    pagination_class = PageNumberPagination
+    permission_classes = (IsAdminUserOrReadOnly, )
+    def get_serializer_class(self):
+        if self.action in ('list', 'retrieve'):
+            return TitleReadSerializer
+        return TitleReWriteSerializer
 
 
 class CategoryViewSet(viewsets.ModelViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
-    permission_classes = [IsAuthorOrAdminOrModerator]
+    permission_classes = (IsAdminUserOrReadOnly, )
+    filter_backends = (SearchFilter, )
+    search_fields = ('name', )
+    lookup_field = 'slug'
 
 
 class GenreViewSet(viewsets.ModelViewSet):
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
-    permission_classes = [IsAuthorOrAdminOrModerator]
+    permission_classes = (IsAdminUserOrReadOnly, )
+    filter_backends = (SearchFilter, )
+    search_fields = ('name', )
+    lookup_field = 'slug'
+
 
 class ReviewViewSet(viewsets.ModelViewSet):
     serializer_class = ReviewSerializer
