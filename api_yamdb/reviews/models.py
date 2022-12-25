@@ -1,15 +1,8 @@
-from datetime import datetime, timedelta
-import jwt
-
 from django.db import models
-from django.conf import settings
 from django.contrib.auth.models import (
-    AbstractBaseUser, BaseUserManager, PermissionsMixin, AbstractUser
-
+    BaseUserManager, AbstractUser
 )
 from django.core.validators import MaxValueValidator, MinValueValidator
-from django.core.validators import RegexValidator
-
 
 from .validators import validate_username
 
@@ -22,7 +15,11 @@ class UserManager(BaseUserManager):
         return user
 
     def create_superuser(self, email, password, last_login=None, **kwargs):
-        user = self.model(email=email, is_staff=True, is_superuser=True, **kwargs)
+        user = self.model(
+            email=email,
+            is_staff=True,
+            is_superuser=True,
+            **kwargs)
         user.set_password(password)
         user.save()
         return user
@@ -81,6 +78,7 @@ class User(AbstractUser):
     )
 
     objects = UserManager()
+
     def __str__(self):
         return self.username
 
@@ -99,38 +97,18 @@ class User(AbstractUser):
     class Meta:
         ordering = ('id',)
 
-    @property
-    def token(self) -> str:
-        """
-        Позволяет получить токен пользователя путем вызова user.token, вместо
-        user._generate_jwt_token().
-        """
-        return self._generate_jwt_token()
-
-    def _generate_jwt_token(self) -> str:
-        """
-        Генерирует веб-токен JSON, срок действия токена составляет 1 день от создания
-        """
-        dt = datetime.now() + timedelta(days=1)
-
-        token = jwt.encode(
-            {"id": self.pk, "exp": int(dt.strftime("%s"))},
-            settings.SECRET_KEY,
-            algorithm="HS256",
-        )
-
-        return token
-
 
 class Category(models.Model):
     name = models.CharField(
         'имя категории',
-        max_length=200
+        max_length=256
     )
     slug = models.SlugField(
         'слаг категории',
         unique=True,
-        db_index=True
+        db_index=True,
+        max_length=50
+
     )
 
     class Meta:
@@ -154,7 +132,6 @@ class Genre(models.Model):
     class Meta:
         verbose_name = 'Жанры'
         
-
     def __str__(self):
         return f'{self.name} {self.name}'
 
@@ -162,7 +139,7 @@ class Genre(models.Model):
 class Title(models.Model):
     name = models.CharField(
         'название',
-        max_length=100,
+        max_length=200,
         db_index=True
     )
     year = models.IntegerField(
@@ -172,6 +149,13 @@ class Title(models.Model):
         Category,
         on_delete=models.SET_NULL,
         related_name='titles',
+        verbose_name='категория',
+        null=True,
+        blank=True
+    )
+    description = models.TextField(
+        'описание',
+        max_length=255,
         null=True,
         blank=True
     )
@@ -222,6 +206,7 @@ class Review(models.Model):
                 name='unique_review'
             ),
         ]
+
 
 class Comment(models.Model):
     review = models.ForeignKey(
