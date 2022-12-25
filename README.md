@@ -65,6 +65,6 @@ py yatube_api/manage.py
 ## Об авторах
 Трудяги из Yandex.practicum
 
-* [Example]: https://github.com/iPROJEKT 
-* [Example]: https://github.com/fluid1408 
-* [Example]: https://github.com/Vediusse
+* [Example][https://github.com/iPROJEKT] 
+* [Example][https://github.com/fluid1408] 
+* [Example][https://github.com/Vediusse]
