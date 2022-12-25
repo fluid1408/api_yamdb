@@ -131,7 +131,7 @@ class Genre(models.Model):
 
     class Meta:
         verbose_name = 'Жанры'
-        
+
     def __str__(self):
         return f'{self.name} {self.name}'
 

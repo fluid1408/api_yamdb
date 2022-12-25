@@ -13,4 +13,3 @@ def validate_username(value):
             (f'Не допустимые символы <{value}> в нике.'),
             params={'value': value},
         )
-
