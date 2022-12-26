@@ -1,43 +1,26 @@
 import random
 
+from django.conf import settings
+from django.contrib.auth.hashers import check_password, make_password
 from django.core.mail import send_mail
 from django.db import IntegrityError
-from django.shortcuts import get_object_or_404
-from rest_framework import viewsets, status
-from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
-from rest_framework.decorators import api_view, permission_classes, action
-from rest_framework.response import Response
-from django.contrib.auth.hashers import make_password, check_password
-from rest_framework_simplejwt.tokens import AccessToken
-from rest_framework.filters import SearchFilter
-from rest_framework.pagination import PageNumberPagination
 from django.db.models import Avg
+from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import mixins, viewsets
-
-from django.conf import settings
-from reviews.models import Title, Category, Genre, User, Review
+from rest_framework import status, viewsets, mixins
+from rest_framework.decorators import api_view, permission_classes, action
+from rest_framework.filters import SearchFilter
+from rest_framework.permissions import AllowAny, IsAuthenticated, IsAuthenticatedOrReadOnly
+from rest_framework.response import Response
+from rest_framework_simplejwt.tokens import AccessToken
 
 from .filters import TitleFilter
-from .serializers import (
-    TitleReadSerializer,
-    TitleReWriteSerializer,
-    CategorySerializer,
-    GenreSerializer,
-    UserSerializer,
-    SendCodeSerializer,
-    CheckConfirmationCodeSerializer,
-    CommentSerializer,
-    ReviewSerializer,
-    IsNotAdminUserSerializer,
+from .permissions import IsAdmin, IsAdminOrReadOnlyMy, AuthorAndModeratorOrReadOnly
+from .serializers import CheckConfirmationCodeSerializer, SendCodeSerializer, UserSerializer, \
+    IsNotAdminUserSerializer, TitleReWriteSerializer, TitleReadSerializer, CategorySerializer, GenreSerializer, \
+    ReviewSerializer, CommentSerializer
 
-)
-from .permissions import (
-    IsAdmin,
-    IsAdminOrReadOnlyMy,
-    IsAdminModeratorOrReadOnly, AuthorAndModeratorOrReadOnly
-)
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from reviews.models import User, Title, Category, Genre, Review
 
 
 @api_view(["POST"])
