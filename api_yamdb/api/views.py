@@ -142,7 +142,7 @@ class UserViewSet(viewsets.ModelViewSet):
 class TitleViewSet(viewsets.ModelViewSet):
     queryset = Title.objects.all().annotate(
         rating=Avg('reviews__score')
-    )
+    ).order_by('id')
     serializer_class = TitleReWriteSerializer
     permission_classes = (IsAdminOrReadOnlyMy,)
     filter_backends = (DjangoFilterBackend,)
@@ -160,7 +160,7 @@ class CategoryViewSet(
     mixins.DestroyModelMixin,
     viewsets.GenericViewSet,
 ):
-    queryset = Category.objects.all()
+    queryset = Category.objects.all().order_by('id')
     serializer_class = CategorySerializer
     permission_classes = (IsAdminOrReadOnlyMy, )
     pagination_class = PageNumberPagination
@@ -175,7 +175,7 @@ class GenreViewSet(
     mixins.DestroyModelMixin,
     viewsets.GenericViewSet,
 ):
-    queryset = Genre.objects.all()
+    queryset = Genre.objects.all().order_by('id')
     serializer_class = GenreSerializer
     permission_classes = (IsAdminOrReadOnlyMy, )
     filter_backends = (SearchFilter, )
@@ -191,7 +191,7 @@ class ReviewViewSet(viewsets.ModelViewSet):
         return get_object_or_404(Title, pk=self.kwargs.get('title_id'))
 
     def get_queryset(self):
-        return self.get_title_id().reviews.all()
+        return self.get_title_id().reviews.all().order_by('id')
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user, title=self.get_title_id())
@@ -203,7 +203,7 @@ class CommentViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         review = get_object_or_404(Review, pk=self.kwargs.get('review_id'))
-        return review.comments.all()
+        return review.comments.all().order_by('id')
 
     def perform_create(self, serializer):
         review = get_object_or_404(
