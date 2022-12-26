@@ -18,7 +18,13 @@ py -m pip install -r requirements.txt
     1) Зайти в файл settings
     2) Исправить переменные
         EMAIL_HOST_USER = 'example@domen.ru'
-        EMAIL_HOST_PASSWORD = 'Пароль приложения(можно получить на сайте сервиса электронной почты )'
+        (можно получить на сайте сервиса электронной почты )
+            EMAIL_HOST_PASSWORD
+            EMAIL_HOST
+            EMAIL_PORT
+            EMAIL_USE_TLS 
+            EMAIL_USE_SSL
+            Настройки по умолчанию для mail.ru 
 ИЛИ
     Заменить 
         EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
