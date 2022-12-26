@@ -18,7 +18,7 @@ load_dotenv()
 # Application definition
 
 INSTALLED_APPS = [
-    'django.contrib.admin',
+    #'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
@@ -130,6 +130,7 @@ SIMPLE_JWT = {
 }
 
 
+
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
@@ -145,3 +146,9 @@ REST_FRAMEWORK = {
     'PageNumberPagination',
     "PAGE_SIZE": 5,
 }
+
+
+EMAIL_MAX_LENGTH = 254
+USERNAME_MAX_LENGTH = 150
+GROUP_MAX_LENGTH = 256
+SLUG_MAX_LENGTH = 50

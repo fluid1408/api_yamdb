@@ -4,25 +4,8 @@ from django.contrib.auth.models import (
 )
 from django.core.validators import MaxValueValidator, MinValueValidator
 
-from .validators import validate_username
-
-
-class UserManager(BaseUserManager):
-    def create_user(self, email, password=None, last_login=None, **kwargs):
-        user = self.model(email=email, **kwargs)
-        user.set_password(password)
-        user.save()
-        return user
-
-    def create_superuser(self, email, password, last_login=None, **kwargs):
-        user = self.model(
-            email=email,
-            is_staff=True,
-            is_superuser=True,
-            **kwargs)
-        user.set_password(password)
-        user.save()
-        return user
+from .validators import validate_username, validate_year
+from django.conf import settings
 
 
 class User(AbstractUser):
@@ -35,15 +18,14 @@ class User(AbstractUser):
         (MODERATOR, "Модератор"),
         (USER, "Пользователь"),
     )
+
     username = models.CharField(
         validators=(validate_username,),
-        max_length=150,
+        max_length=settings.USERNAME_MAX_LENGTH,
         unique=True,
-        blank=False,
-        null=False
     )
     email = models.EmailField(
-        max_length=254,
+        max_length=settings.EMAIL_MAX_LENGTH,
         unique=True,
         blank=False,
         null=False
@@ -77,63 +59,51 @@ class User(AbstractUser):
         default='XXXX'
     )
 
-    objects = UserManager()
-
     def __str__(self):
         return self.username
 
     @property
     def is_admin(self):
-        return self.role == self.ADMIN
+        return self.role == self.ADMIN or self.role == self.is_staff
 
     @property
     def is_moderator(self):
-        return self.role == self.MODERATOR
+        return self.role == self.MODERATOR or self.is_admin
 
     @property
     def is_user(self):
         return self.role == self.USER
 
     class Meta:
-        ordering = ('id',)
+        ordering = ('username',)
 
 
-class Category(models.Model):
+class Group(models.Model):
     name = models.CharField(
-        'имя категории',
-        max_length=256
+        max_length=settings.GROUP_MAX_LENGTH
     )
     slug = models.SlugField(
-        'слаг категории',
         unique=True,
         db_index=True,
-        max_length=50
+        max_length=settings.SLUG_MAX_LENGTH
 
     )
 
+    def __str__(self):
+        return f'{self.name}'
+
+
+class Category(Group):
     class Meta:
         verbose_name = 'Категории'
 
-    def __str__(self):
-        return f'{self.name} {self.name}'
 
 
-class Genre(models.Model):
-    name = models.CharField(
-        'имя жанра',
-        max_length=200
-    )
-    slug = models.SlugField(
-        'cлаг жанра',
-        unique=True,
-        db_index=True
-    )
 
+class Genre(Group):
     class Meta:
         verbose_name = 'Жанры'
 
-    def __str__(self):
-        return f'{self.name} {self.name}'
 
 
 class Title(models.Model):
@@ -144,6 +114,7 @@ class Title(models.Model):
     )
     year = models.IntegerField(
         'год',
+        validators=[validate_year],
     )
     category = models.ForeignKey(
         Category,
@@ -155,7 +126,6 @@ class Title(models.Model):
     )
     description = models.TextField(
         'описание',
-        max_length=255,
         null=True,
         blank=True
     )
@@ -164,6 +134,9 @@ class Title(models.Model):
         related_name='titles',
         verbose_name='жанр'
     )
+
+    class Meta:
+        ordering = ('name',)
 
     def __str__(self):
         return self.name

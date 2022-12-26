@@ -32,7 +32,7 @@ py -m pip install -r requirements.txt
 python yatube_api/manage.py
 
 # Windows
-py yatube_api/manage.py
+python yatube_api/manage.py
 ```
 ## Использование 
 ### Регистрация нового пользователя/ обновление confirmation_code
