@@ -30,7 +30,7 @@ class User(AbstractUser):
     )
     role = models.CharField(
         'роль',
-        max_length=20,
+        max_length=max([len(roles[1]) for roles in ROLES]),
         choices=ROLES,
         default=USER,
         blank=True
@@ -61,22 +61,24 @@ class User(AbstractUser):
         return self.username
 
     @property
+    def is_user(self):
+        return self.is_authenticated
+
+    @property
     def is_admin(self):
-        return self.role == self.ADMIN or self.is_staff
+        return self.is_user and (self.role == self.ADMIN or self.is_staff)
 
     @property
     def is_moderator(self):
-        return self.role == self.MODERATOR or self.is_admin
+        return self.is_user and (self.role == self.MODERATOR or self.is_admin)
 
-    @property
-    def is_user(self):
-        return self.role == self.USER
+
 
     class Meta:
         ordering = ('username',)
 
 
-class Group(models.Model):
+class GenreCategory(models.Model):
     name = models.CharField(
         max_length=settings.GROUP_MAX_LENGTH
     )
@@ -91,17 +93,14 @@ class Group(models.Model):
         return f'{self.name}'
 
 
-class Category(Group):
+class Category(GenreCategory):
     class Meta:
-        verbose_name = 'Категории'
+        verbose_name = 'Категория произведения'
 
 
-
-
-class Genre(Group):
+class Genre(GenreCategory):
     class Meta:
-        verbose_name = 'Жанры'
-
+        verbose_name = 'Жанры произведения'
 
 
 class Title(models.Model):
@@ -137,10 +136,16 @@ class Title(models.Model):
         ordering = ('name',)
 
 
-
-class Account(models.Model):
+class ReviewComment(models.Model):
     text = models.TextField(
         verbose_name='Текст',
+    )
+    author = models.ForeignKey(
+        User,
+        verbose_name='Автор',
+        on_delete=models.CASCADE,
+        related_name='%(class)s',
+        default=''
     )
     pub_date = models.DateTimeField(
         verbose_name='Дата публикации',
@@ -156,19 +161,14 @@ class Account(models.Model):
         ordering = ('pub_date',)
 
 
-class Review(Account):
+class Review(ReviewComment):
     title = models.ForeignKey(
         Title,
         verbose_name='Произведение',
         on_delete=models.CASCADE,
         related_name='reviews'
     )
-    author = models.ForeignKey(
-        User,
-        verbose_name='Автор',
-        on_delete=models.CASCADE,
-        default=''
-    )
+
     score = models.PositiveSmallIntegerField(
         verbose_name='Рейтинг',
         validators=[
@@ -186,18 +186,11 @@ class Review(Account):
         ]
 
 
-class Comment(Account):
-    review= models.ForeignKey(
+class Comment(ReviewComment):
+    review = models.ForeignKey(
         Review,
         verbose_name='Отзыв',
         on_delete=models.CASCADE,
         related_name='comments'
-    )
-    author = models.ForeignKey(
-        User,
-        verbose_name='Автор',
-        on_delete=models.CASCADE,
-        related_name='comments',
-        default=''
     )
 

@@ -11,30 +11,13 @@ class SendCodeSerializer(serializers.Serializer):
     username = serializers.CharField(
         max_length=settings.USERNAME_MAX_LENGTH,
         required=True,
-        validators=[],
+        validators=[validate_username],
     )
     email = serializers.EmailField(
         max_length=settings.EMAIL_MAX_LENGTH,
         required=True
     )
 
-    def validate(self, data):
-        user = data.get("username", False)
-        validate_username(data.get("username"))
-
-        if User.objects.filter(email=data["email"]):
-            user = User.objects.get(email=data["email"])
-            if user.username != data["username"]:
-                raise serializers.ValidationError(
-                    {"email": "Данный email уже зарегистрирован"}
-                )
-        elif User.objects.filter(username=data["username"]):
-            user = User.objects.get(username=data["username"])
-            if user.email != data["email"]:
-                raise serializers.ValidationError(
-                    {"email": "Данный email уже зарегистрирован"}
-                )
-        return data
 
 
 class CheckConfirmationCodeSerializer(serializers.Serializer):
@@ -51,12 +34,28 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = (
-            'username', 'email', 'first_name',
-            'last_name', 'bio', 'role')
+            'username',
+            'email',
+            'first_name',
+            'last_name',
+            'bio',
+            'role'
+        )
 
 
-class IsNotAdminUserSerializer(UserSerializer):
+class UserMeSerializer(serializers.ModelSerializer):
     role = serializers.CharField(read_only=True)
+
+    class Meta:
+        model = User
+        fields = (
+            'username',
+            'email',
+            'first_name',
+            'last_name',
+            'bio',
+            'role'
+        )
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -145,11 +144,10 @@ class ReviewSerializer(serializers.ModelSerializer):
                     title=get_object_or_404(Title, pk=title_id),
                     author=request.user).exists():
                 raise ValidationError(
-                    'Error'
+                    'Не найдено произведение или отзыв'
                 )
         return data
-
     class Meta:
         model = Review
-        fields = '__all__'
+        fields = ('id', 'text', 'author', 'score', 'pub_date',)
         read_only_fields = ['title']

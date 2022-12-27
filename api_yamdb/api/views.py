@@ -17,7 +17,7 @@ from rest_framework_simplejwt.tokens import AccessToken
 from .filters import TitleFilter
 from .permissions import IsAdmin, IsAdminOrReadOnlyMy, AuthorAndModeratorOrReadOnly
 from .serializers import CheckConfirmationCodeSerializer, SendCodeSerializer, UserSerializer, \
-    IsNotAdminUserSerializer, TitleReWriteSerializer, TitleReadSerializer, CategorySerializer, GenreSerializer, \
+    UserMeSerializer, TitleReWriteSerializer, TitleReadSerializer, CategorySerializer, GenreSerializer, \
     ReviewSerializer, CommentSerializer
 
 from reviews.models import User, Title, Category, Genre, Review
@@ -30,10 +30,12 @@ def get_jwt(request):
     serializer.is_valid(raise_exception=True)
     username = serializer.validated_data['username']
     confirmation_code = serializer.validated_data['confirmation_code']
-    user_base = get_object_or_404(User, username=username)
-    if check_password(confirmation_code, user_base.confirmation_code):
-        token = str(AccessToken.for_user(user_base))
+    user = get_object_or_404(User, username=username)
+    if check_password(confirmation_code, user.confirmation_code):
+        token = str(AccessToken.for_user(user))
         return Response({'access': token}, status=status.HTTP_201_CREATED)
+    user.confirmation_code = "000000"
+    user.save()
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -41,33 +43,32 @@ def get_jwt(request):
 @permission_classes([AllowAny])
 def send_code(request):
     serializer = SendCodeSerializer(data=request.data)
-    if serializer.is_valid(raise_exception=True):
-        email = request.data.get("email", False)
-        username = request.data.get("username", False)
-        confirmation_code = "".join(map(str, random.sample(range(10), 6)))
-        try:
-            user, created = User.objects.get_or_create(email=email, username=username)
-        except IntegrityError:
-            return Response(
-                'Такой логин или email уже существуют',
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        user.confirmation_code = make_password(
-            confirmation_code, salt=None, hasher="default"
-        )
-        user.save()
-
-        send_mail(
-            "Code",
-            confirmation_code,
-            settings.EMAIL_HOST_USER,
-            [email],
-            fail_silently=False,
-        )
+    serializer.is_valid(raise_exception=True)
+    email = request.data.get("email", False)
+    username = request.data.get("username", False)
+    confirmation_code = "".join(map(str, random.sample(
+        range(settings.CONFIRMCODE_MAX_LENGTH), settings.CONFIRMCODE_LENGTH)))
+    try:
+        user, created = User.objects.get_or_create(email=email, username=username)
+    except IntegrityError:
         return Response(
-            serializer.initial_data, status=status.HTTP_200_OK
-        )
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            'Такой логин или email уже существуют',
+            status=status.HTTP_400_BAD_REQUEST
+            )
+    user.confirmation_code = make_password(
+        confirmation_code, salt=None, hasher="default"
+    )
+    user.save()
+    send_mail(
+        "Code",
+        confirmation_code,
+        settings.EMAIL_HOST_USER,
+        [email],
+        fail_silently=False,
+    )
+    return Response(
+        serializer.initial_data, status=status.HTTP_200_OK
+    )
 
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -80,28 +81,21 @@ class UserViewSet(viewsets.ModelViewSet):
     http_method_names = ['get', 'post', 'patch', 'delete']
 
     @action(
-        methods=['GET', 'PATCH'],
+        methods=['get', 'patch'],
         detail=False,
-        permission_classes=(IsAuthenticated,),
-        url_path='me')
-    def get_current_user_info(self, request):
-        serializer = UserSerializer(request.user)
+        url_path='me',
+        permission_classes=(IsAuthenticated,)
+    )
+    def get_patch_me(self, request):
+        user = get_object_or_404(User, username=self.request.user)
+        if request.method == 'GET':
+            serializer = UserMeSerializer(user)
+            return Response(serializer.data, status=status.HTTP_200_OK)
         if request.method == 'PATCH':
-            if request.user.is_admin:
-                serializer = UserSerializer(
-                    request.user,
-                    data=request.data,
-                    partial=True)
-            else:
-                serializer = IsNotAdminUserSerializer(
-                    request.user,
-                    data=request.data,
-                    partial=True)
+            serializer = UserMeSerializer(user, data=request.data, partial=True)
             serializer.is_valid(raise_exception=True)
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response(serializer.data)
-
 
 
 class TitleViewSet(viewsets.ModelViewSet):

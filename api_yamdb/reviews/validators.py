@@ -3,7 +3,6 @@ import datetime as dt
 
 from django.core.exceptions import ValidationError
 
-
 def validate_username(value):
     if value == 'me':
         raise ValidationError(
@@ -13,7 +12,7 @@ def validate_username(value):
     if re.search(r'^[\w.@+-]+$', value) is None:
         raise ValidationError(
             (f'Не допустимые символы <{value}> в нике.'),
-            params={'value': value},
+            params={'value': re.search(r'^[\w.@+-]+$', value)},
         )
     return value
 
