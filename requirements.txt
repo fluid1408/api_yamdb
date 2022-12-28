@@ -4,8 +4,9 @@ django-filter==22.1
 djangorestframework==3.12.4
 djangorestframework-simplejwt==5.2.2
 requests==2.26.0
+djangorestframework==3.12.4
 PyJWT==2.4.0
 pytest==6.2.4
 pytest-django==4.4.0
 pytest-pythonpath==0.7.3
-
+python-dotenv==0.20.0

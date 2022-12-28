@@ -18,7 +18,7 @@ load_dotenv()
 # Application definition
 
 INSTALLED_APPS = [
-    'django.contrib.admin',
+    # 'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
@@ -145,3 +145,14 @@ REST_FRAMEWORK = {
     'PageNumberPagination',
     "PAGE_SIZE": 5,
 }
+
+
+EMAIL_MAX_LENGTH = 254
+USERNAME_MAX_LENGTH = 150
+GROUP_MAX_LENGTH = 256
+TITLE_MAX_LENGTH = 256
+SLUG_MAX_LENGTH = 50
+NAME_MAX_LENGTH = 150
+
+CONFIRMCODE_LENGTH = 6
+CONFIRMCODE_MAX_LENGTH = 10
