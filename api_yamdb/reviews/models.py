@@ -65,8 +65,6 @@ class User(AbstractUser):
     def is_moderator(self):
         return self.is_user and (self.role == self.MODERATOR or self.is_admin)
 
-
-
     class Meta:
         ordering = ('username',)
 
@@ -151,7 +149,7 @@ class ReviewComment(models.Model):
 
     class Meta:
         abstract = True
-        ordering = ('pub_date',)
+        ordering = ['-pub_date']
 
 
 class Review(ReviewComment):
@@ -186,4 +184,3 @@ class Comment(ReviewComment):
         on_delete=models.CASCADE,
         related_name='comments'
     )
-

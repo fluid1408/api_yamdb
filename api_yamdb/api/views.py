@@ -1,7 +1,4 @@
-import random
-
 from django.conf import settings
-from django.contrib.auth.hashers import check_password, make_password
 from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import send_mail
 from django.db import IntegrityError
@@ -11,15 +8,22 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import status, viewsets, mixins
 from rest_framework.decorators import api_view, permission_classes, action
 from rest_framework.filters import SearchFilter
-from rest_framework.permissions import AllowAny, IsAuthenticated, IsAuthenticatedOrReadOnly
+from rest_framework.permissions import (AllowAny,
+                                        IsAuthenticated,
+                                        IsAuthenticatedOrReadOnly)
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import AccessToken
 
 from .filters import TitleFilter
-from .permissions import IsAdmin, IsAdminOrReadOnlyMy, AuthorAndModeratorOrReadOnly
-from .serializers import CheckConfirmationCodeSerializer, SendCodeSerializer, UserSerializer, \
-    UserMeSerializer, TitleReWriteSerializer, TitleReadSerializer, CategorySerializer, GenreSerializer, \
-    ReviewSerializer, CommentSerializer
+from .permissions import (IsAdmin,
+                          IsAdminOrReadOnlyMy,
+                          AuthorAndModeratorOrReadOnly)
+from .serializers import (CategorySerializer, CheckConfirmationCodeSerializer,
+                          GenreSerializer, CommentSerializer,
+                          UserMeSerializer,
+                          SendCodeSerializer, TitleReWriteSerializer,
+                          TitleReadSerializer,
+                          UserSerializer, ReviewSerializer)
 
 from reviews.models import User, Title, Category, Genre, Review
 
@@ -47,12 +51,13 @@ def send_code(request):
     username = request.data.get("username", False)
 
     try:
-        user, created = User.objects.get_or_create(email=email, username=username)
+        user, created = User.objects.get_or_create(email=email,
+                                                   username=username)
     except IntegrityError:
         return Response(
             'Такой логин или email уже существуют',
             status=status.HTTP_400_BAD_REQUEST
-            )
+        )
     confirmation_code = default_token_generator.make_token(user)
     user.save()
     send_mail(
@@ -88,7 +93,9 @@ class UserViewSet(viewsets.ModelViewSet):
             serializer = UserMeSerializer(user)
             return Response(serializer.data, status=status.HTTP_200_OK)
         if request.method == 'PATCH':
-            serializer = UserMeSerializer(user, data=request.data, partial=True)
+            serializer = UserMeSerializer(user,
+                                          data=request.data,
+                                          partial=True)
             serializer.is_valid(raise_exception=True)
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
@@ -106,6 +113,7 @@ class TitleViewSet(viewsets.ModelViewSet):
         if self.action in ('retrieve', 'list'):
             return TitleReadSerializer
         return TitleReWriteSerializer
+
 
 class CategoryGenreMixin(
     mixins.ListModelMixin,

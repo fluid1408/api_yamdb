@@ -19,7 +19,6 @@ class SendCodeSerializer(serializers.Serializer):
     )
 
 
-
 class CheckConfirmationCodeSerializer(serializers.Serializer):
     username = serializers.CharField(
         required=True,
@@ -147,6 +146,7 @@ class ReviewSerializer(serializers.ModelSerializer):
                     'Не найдено произведение или отзыв'
                 )
         return data
+
     class Meta:
         model = Review
         fields = ('id', 'text', 'author', 'score', 'pub_date',)

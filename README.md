@@ -63,7 +63,10 @@ python manage.py migrate
     На
         EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 ```
-
+* Для заполнения базы данных:
+```
+    python import_csv
+```
 * Запустить проект:
 ```
 python manage.py runserver

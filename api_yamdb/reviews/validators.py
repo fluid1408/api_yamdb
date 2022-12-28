@@ -3,14 +3,15 @@ import datetime as dt
 
 from django.core.exceptions import ValidationError
 
+
 def validate_username(value):
     if value == 'me':
         raise ValidationError(
             ('Имя пользователя не может быть <me>.'),
             params={'value': value},
         )
-    if re.search(r'^\w.[@+-]+$', value) is None:
-        r = set('^[\w.@+-]+$')
+    if re.search(r'^[\w.@+-]+$', value) is None:
+        r = set(r'^[\w.@+-]+$')
         char_value = set(value)
         uncorrect_chars = list(char_value & r)
         raise ValidationError(
@@ -19,9 +20,8 @@ def validate_username(value):
         )
     return value
 
+
 def validate_year(year):
     now_year = dt.date.today()
     if year > now_year.year:
         raise ValueError(f'Некорректный год {year}')
-
-
