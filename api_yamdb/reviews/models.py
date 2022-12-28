@@ -41,20 +41,13 @@ class User(AbstractUser):
     )
     first_name = models.CharField(
         'имя',
-        max_length=150,
+        max_length=settings.NAME_MAX_LENGTH,
         blank=True
     )
     last_name = models.CharField(
         'фамилия',
-        max_length=150,
+        max_length=settings.NAME_MAX_LENGTH,
         blank=True
-    )
-    confirmation_code = models.CharField(
-        'код подтверждения',
-        max_length=255,
-        null=True,
-        blank=False,
-        default='XXXX'
     )
 
     def __str__(self):

@@ -2,6 +2,7 @@ import random
 
 from django.conf import settings
 from django.contrib.auth.hashers import check_password, make_password
+from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import send_mail
 from django.db import IntegrityError
 from django.db.models import Avg
@@ -31,11 +32,9 @@ def get_jwt(request):
     username = serializer.validated_data['username']
     confirmation_code = serializer.validated_data['confirmation_code']
     user = get_object_or_404(User, username=username)
-    if check_password(confirmation_code, user.confirmation_code):
+    if default_token_generator.check_token(user, confirmation_code):
         token = str(AccessToken.for_user(user))
         return Response({'access': token}, status=status.HTTP_201_CREATED)
-    user.confirmation_code = "000000"
-    user.save()
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -46,8 +45,7 @@ def send_code(request):
     serializer.is_valid(raise_exception=True)
     email = request.data.get("email", False)
     username = request.data.get("username", False)
-    confirmation_code = "".join(map(str, random.sample(
-        range(settings.CONFIRMCODE_MAX_LENGTH), settings.CONFIRMCODE_LENGTH)))
+
     try:
         user, created = User.objects.get_or_create(email=email, username=username)
     except IntegrityError:
@@ -55,9 +53,7 @@ def send_code(request):
             'Такой логин или email уже существуют',
             status=status.HTTP_400_BAD_REQUEST
             )
-    user.confirmation_code = make_password(
-        confirmation_code, salt=None, hasher="default"
-    )
+    confirmation_code = default_token_generator.make_token(user)
     user.save()
     send_mail(
         "Code",
