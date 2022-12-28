@@ -1,5 +1,4 @@
 import csv
-import os
 
 from django.shortcuts import get_object_or_404
 
@@ -81,4 +80,3 @@ with open('comments.csv') as csvfile:
             pub_date=row['pub_date']
         )
         row_db.save()
-
