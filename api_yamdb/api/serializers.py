@@ -22,7 +22,8 @@ class SendCodeSerializer(serializers.Serializer):
 class CheckConfirmationCodeSerializer(serializers.Serializer):
     username = serializers.CharField(
         required=True,
-        max_length=settings.USERNAME_MAX_LENGTH
+        max_length=settings.USERNAME_MAX_LENGTH,
+        validators=[validate_username],
     )
     confirmation_code = serializers.CharField(
         required=True
@@ -42,19 +43,9 @@ class UserSerializer(serializers.ModelSerializer):
         )
 
 
-class UserMeSerializer(serializers.ModelSerializer):
-    role = serializers.CharField(read_only=True)
-
-    class Meta:
-        model = User
-        fields = (
-            'username',
-            'email',
-            'first_name',
-            'last_name',
-            'bio',
-            'role'
-        )
+class UserMeSerializer(UserSerializer):
+    class Meta(UserSerializer.Meta):
+        read_only_fields = ('role',)
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -90,15 +81,7 @@ class TitleReadSerializer(serializers.ModelSerializer):
             'category'
         )
         model = Title
-        read_only_fields = (
-            'id',
-            'name',
-            'year',
-            'rating',
-            'description',
-            'genre',
-            'category'
-        )
+        read_only_fields = fields
 
 
 class TitleReWriteSerializer(serializers.ModelSerializer):
@@ -113,7 +96,14 @@ class TitleReWriteSerializer(serializers.ModelSerializer):
     )
 
     class Meta:
-        fields = '__all__'
+        fields = (
+            'id',
+            'name',
+            'year',
+            'description',
+            'genre',
+            'category',
+        )
         model = Title
 
 
@@ -137,17 +127,17 @@ class ReviewSerializer(serializers.ModelSerializer):
 
     def validate(self, data):
         request = self.context['request']
-        if request.method == 'POST':
-            title_id = self.context['view'].kwargs.get('title_id')
-            if Review.objects.filter(
-                    title=get_object_or_404(Title, pk=title_id),
-                    author=request.user).exists():
-                raise ValidationError(
-                    'Не найдено произведение или отзыв'
-                )
+        if request.method != 'POST':
+            return data
+        title_id = self.context['view'].kwargs.get('title_id')
+        if Review.objects.filter(
+                title=get_object_or_404(Title, pk=title_id),
+                author=request.user).exists():
+            raise ValidationError(
+                'Не найдено произведение или отзыв'
+            )
         return data
 
     class Meta:
         model = Review
         fields = ('id', 'text', 'author', 'score', 'pub_date',)
-        read_only_fields = ['title']

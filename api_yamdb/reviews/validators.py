@@ -11,17 +11,16 @@ def validate_username(value):
             params={'value': value},
         )
     if re.search(r'^[\w.@+-]+$', value) is None:
-        r = set(r'^[\w.@+-]+$')
-        char_value = set(value)
-        uncorrect_chars = list(char_value & r)
+        uncorrect_chars = ''.join(set(re.findall((r'[^/w.@+-]'), value)))
         raise ValidationError(
-            (f'Не допустимые символы  {uncorrect_chars}  в нике.'),
-            params={'value': uncorrect_chars},
+            f'Не допустимые символы {uncorrect_chars} в нике.',
+            params={'chars': uncorrect_chars},
         )
-    return value
+        return value
 
 
 def validate_year(year):
     now_year = dt.date.today()
     if year > now_year.year:
-        raise ValueError(f'Некорректный год {year}')
+        raise ValueError(f'{year} не может быть больше {now_year}')
+    return year
