@@ -70,7 +70,9 @@ class TitleReadSerializer(serializers.ModelSerializer):
     category = CategorySerializer(many=False, required=True)
     genre = GenreSerializer(many=True, required=False)
     rating = serializers.IntegerField()
-    validate_class = (validate_year,)
+    year = serializers.IntegerField(
+        validators=[validate_year],
+    )
 
     class Meta:
         fields = (

@@ -8,10 +8,11 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import status, viewsets, mixins
 from rest_framework.decorators import api_view, permission_classes, action
 from rest_framework.filters import SearchFilter
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import (
     AllowAny,
     IsAuthenticated,
-    IsAuthenticatedOrReadOnly
+    IsAuthenticatedOrReadOnly,
 )
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import AccessToken
@@ -20,7 +21,7 @@ from .filters import TitleFilter
 from .permissions import (
     IsAdmin,
     IsAdminOrReadOnlyMy,
-    AuthorAndModeratorOrReadOnly
+    AdminOrModeratorOrAuthorOrReadOnly
 )
 from .serializers import (
     CategorySerializer,
@@ -111,11 +112,13 @@ class UserViewSet(viewsets.ModelViewSet):
 
 class TitleViewSet(viewsets.ModelViewSet):
     queryset = Title.objects.all().annotate(
-        rating=Avg('reviews__score')).order_by('name')
+        rating=Avg('reviews__score'))
     serializer_class = TitleReWriteSerializer
     permission_classes = (IsAdminOrReadOnlyMy,)
     filter_backends = (DjangoFilterBackend,)
     filterset_class = TitleFilter
+    ordering = 'name'
+
 
     def get_serializer_class(self):
         if self.action in ('retrieve', 'list'):
@@ -150,7 +153,7 @@ class GenreViewSet(CategoryGenreViewSet):
 
 class ReviewViewSet(viewsets.ModelViewSet):
     serializer_class = ReviewSerializer
-    permission_classes = (AuthorAndModeratorOrReadOnly,)
+    permission_classes = (AdminOrModeratorOrAuthorOrReadOnly,)
 
     def get_title(self):
         return get_object_or_404(Title, pk=self.kwargs.get('title_id'))
@@ -164,7 +167,7 @@ class ReviewViewSet(viewsets.ModelViewSet):
 
 class CommentViewSet(viewsets.ModelViewSet):
     serializer_class = CommentSerializer
-    permission_classes = (AuthorAndModeratorOrReadOnly,)
+    permission_classes = (AdminOrModeratorOrAuthorOrReadOnly,)
 
     def get_review(self):
         return get_object_or_404(

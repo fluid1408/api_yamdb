@@ -8,10 +8,10 @@ class TitleFilter(filters.FilterSet):
         field_name='name', lookup_expr='contains'
     )
     category = filters.CharFilter(
-        field_name='category__slug', lookup_expr='exact'
+        field_name='category__slug'
     )
     genre = filters.CharFilter(
-        field_name='genre__slug', lookup_expr='exact'
+        field_name='genre__slug'
     )
 
     class Meta:

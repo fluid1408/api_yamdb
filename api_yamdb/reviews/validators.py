@@ -11,9 +11,9 @@ def validate_username(value):
             ('Имя пользователя не может быть <me>.'),
         )
     uncorrect_chars = ''.join(
-        set(re.findall(settings.REGULAR_EXPRESSION, value))
+        set(re.findall(settings.UNCORRECT_USERNAME_CHARS, value))
     )
-    if uncorrect_chars != '':
+    if uncorrect_chars:
         raise ValidationError(
             f'Не допустимые символы {uncorrect_chars} в нике.',
             params={'chars': uncorrect_chars},
@@ -22,7 +22,7 @@ def validate_username(value):
 
 
 def validate_year(year):
-    now_year = dt.date.today()
-    if year > now_year.year:
-        raise ValueError(f'Указанный год {year} не может быть больше текущего')
+    today = dt.date.today()
+    if year > today.year:
+        raise ValueError(f'Указанный год {year} не может быть больше текущего {today.year}')
     return year

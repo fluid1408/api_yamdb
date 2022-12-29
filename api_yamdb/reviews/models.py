@@ -194,7 +194,7 @@ class Comment(ReviewComment):
     class Meta(ReviewComment.Meta):
         constraints = [
             models.UniqueConstraint(
-                fields=['title', 'author'],
+                fields=['review', 'author'],
                 name='Уникальный комментарий'
             ),
         ]
