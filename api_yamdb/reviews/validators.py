@@ -24,5 +24,7 @@ def validate_username(value):
 def validate_year(year):
     today = dt.date.today()
     if year > today.year:
-        raise ValueError(f'Указанный год {year} не может быть больше текущего {today.year}')
+        raise ValueError(
+            f'Указанный год {year} не может быть больше текущего '
+            f'{today.year}')
     return year
