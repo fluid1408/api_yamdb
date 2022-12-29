@@ -26,7 +26,8 @@ class CheckConfirmationCodeSerializer(serializers.Serializer):
         validators=[validate_username],
     )
     confirmation_code = serializers.CharField(
-        required=True
+        required=True,
+        max_length=settings.CONFIRMCODE_MAX_LENGTH
     )
 
 
