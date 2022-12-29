@@ -108,6 +108,7 @@ class UserViewSet(viewsets.ModelViewSet):
         serializer.save()
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+
 class TitleViewSet(viewsets.ModelViewSet):
     queryset = Title.objects.all().annotate(
         rating=Avg('reviews__score')).order_by('name')
