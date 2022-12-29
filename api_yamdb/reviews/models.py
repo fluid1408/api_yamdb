@@ -59,7 +59,7 @@ class User(AbstractUser):
 
     @property
     def is_admin(self):
-        return self.is_user and (self.role == self.ADMIN or self.is_staff)
+        return (self.role == self.ADMIN or self.is_staff)
 
     @property
     def is_moderator(self):
@@ -81,7 +81,7 @@ class GenreCategory(models.Model):
     )
 
     def __str__(self):
-        return f'{self.name}'
+        return self.name
 
 
 class Category(GenreCategory):
@@ -144,12 +144,12 @@ class ReviewComment(models.Model):
         db_index=True
     )
 
-    def __str__(self):
-        return self.text
-
     class Meta:
         abstract = True
         ordering = ['-pub_date']
+
+    def __str__(self):
+        return self.text
 
 
 class Review(ReviewComment):

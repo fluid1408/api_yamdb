@@ -15,15 +15,23 @@ from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import AccessToken
 
 from .filters import TitleFilter
-from .permissions import (IsAdmin,
-                          IsAdminOrReadOnlyMy,
-                          AuthorAndModeratorOrReadOnly)
-from .serializers import (CategorySerializer, CheckConfirmationCodeSerializer,
-                          GenreSerializer, CommentSerializer,
-                          UserMeSerializer,
-                          SendCodeSerializer, TitleReWriteSerializer,
-                          TitleReadSerializer,
-                          UserSerializer, ReviewSerializer)
+from .permissions import (
+    IsAdmin,
+    IsAdminOrReadOnlyMy,
+    AuthorAndModeratorOrReadOnly
+)
+from .serializers import (
+    CategorySerializer,
+    CheckConfirmationCodeSerializer,
+    GenreSerializer,
+    CommentSerializer,
+    UserMeSerializer,
+    SendCodeSerializer,
+    TitleReWriteSerializer,
+    TitleReadSerializer,
+    UserSerializer,
+    ReviewSerializer
+)
 
 from reviews.models import User, Title, Category, Genre, Review
 
@@ -59,7 +67,6 @@ def send_code(request):
             status=status.HTTP_400_BAD_REQUEST
         )
     confirmation_code = default_token_generator.make_token(user)
-    user.save()
     send_mail(
         "Code",
         confirmation_code,
@@ -100,7 +107,6 @@ class UserViewSet(viewsets.ModelViewSet):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
 
-
 class TitleViewSet(viewsets.ModelViewSet):
     queryset = Title.objects.all().annotate(
         rating=Avg('reviews__score')).order_by('name')
@@ -115,7 +121,7 @@ class TitleViewSet(viewsets.ModelViewSet):
         return TitleReWriteSerializer
 
 
-class CategoryGenreMixin(
+class CategoryGenreViewSet(
     mixins.ListModelMixin,
     mixins.CreateModelMixin,
     mixins.DestroyModelMixin,
@@ -130,13 +136,13 @@ class CategoryGenreMixin(
     lookup_field = 'slug'
 
 
-class CategoryViewSet(CategoryGenreMixin):
-    queryset = Category.objects.all().order_by('name')
+class CategoryViewSet(CategoryGenreViewSet):
+    queryset = Category.objects.all()
     serializer_class = CategorySerializer
 
 
-class GenreViewSet(CategoryGenreMixin):
-    queryset = Genre.objects.all().order_by('name')
+class GenreViewSet(CategoryGenreViewSet):
+    queryset = Genre.objects.all()
     serializer_class = GenreSerializer
 
 
