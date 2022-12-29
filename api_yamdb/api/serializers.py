@@ -4,7 +4,7 @@ from django.shortcuts import get_object_or_404
 from rest_framework import serializers
 
 from reviews.models import User, Category, Genre, Title, Comment, Review
-from reviews.validators import validate_username
+from reviews.validators import validate_username, validate_year
 
 
 class SendCodeSerializer(serializers.Serializer):
@@ -69,6 +69,7 @@ class TitleReadSerializer(serializers.ModelSerializer):
     category = CategorySerializer(many=False, required=True)
     genre = GenreSerializer(many=True, required=False)
     rating = serializers.IntegerField()
+    validate_class = (validate_year,)
 
     class Meta:
         fields = (

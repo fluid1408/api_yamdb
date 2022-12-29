@@ -30,7 +30,7 @@ class User(AbstractUser):
     )
     role = models.CharField(
         'роль',
-        max_length=max([len(roles[1]) for roles in ROLES]),
+        max_length=max(len(role) for role,_ in ROLES),
         choices=ROLES,
         default=USER,
         blank=True
@@ -124,7 +124,7 @@ class Title(models.Model):
     )
 
     def __str__(self):
-        return f'{self.name}'
+        return self.name
 
     class Meta:
         ordering = ('name',)
@@ -152,7 +152,7 @@ class ReviewComment(models.Model):
 
     class Meta:
         abstract = True
-        ordering = ['-pub_date']
+        ordering = ('-pub_date',)
 
     def __str__(self):
         return self.text
@@ -178,7 +178,7 @@ class Review(ReviewComment):
         constraints = [
             models.UniqueConstraint(
                 fields=['title', 'author'],
-                name='unique_review'
+                name='Уникальный обзор'
             ),
         ]
 
@@ -190,3 +190,11 @@ class Comment(ReviewComment):
         on_delete=models.CASCADE,
         related_name='comments'
     )
+
+    class Meta(ReviewComment.Meta):
+        constraints = [
+            models.UniqueConstraint(
+                fields=['title', 'author'],
+                name='Уникальный комментарий'
+            ),
+        ]
