@@ -54,16 +54,12 @@ class User(AbstractUser):
         return self.username
 
     @property
-    def is_user(self):
-        return self.is_authenticated
-
-    @property
     def is_admin(self):
-        return (self.role == self.ADMIN or self.is_staff)
+        return self.role == self.ADMIN or self.is_staff
 
     @property
     def is_moderator(self):
-        return self.is_user and (self.role == self.MODERATOR or self.is_admin)
+        return self.role == self.MODERATOR or self.is_admin
 
     class Meta:
         ordering = ('username',)
@@ -80,17 +76,21 @@ class GenreCategory(models.Model):
 
     )
 
+    class Meta:
+        abstract = True
+        ordering = ('name',)
+
     def __str__(self):
         return self.name
 
 
 class Category(GenreCategory):
-    class Meta:
+    class Meta(GenreCategory.Meta):
         verbose_name = 'Категория произведения'
 
 
 class Genre(GenreCategory):
-    class Meta:
+    class Meta(GenreCategory.Meta):
         verbose_name = 'Жанры произведения'
 
 
@@ -123,6 +123,9 @@ class Title(models.Model):
         verbose_name='жанр'
     )
 
+    def __str__(self):
+        return f'{self.name}'
+
     class Meta:
         ordering = ('name',)
 
@@ -135,7 +138,7 @@ class ReviewComment(models.Model):
         User,
         verbose_name='Автор',
         on_delete=models.CASCADE,
-        related_name='%(class)s',
+        related_name='%(class)ss',
         default=''
     )
     pub_date = models.DateTimeField(
@@ -143,6 +146,9 @@ class ReviewComment(models.Model):
         auto_now_add=True,
         db_index=True
     )
+
+    def __str__(self):
+        return self.text
 
     class Meta:
         abstract = True
@@ -168,7 +174,7 @@ class Review(ReviewComment):
         ]
     )
 
-    class Meta:
+    class Meta(ReviewComment.Meta):
         constraints = [
             models.UniqueConstraint(
                 fields=['title', 'author'],
